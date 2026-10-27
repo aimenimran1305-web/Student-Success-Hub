@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Success Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <main class="container">
+        <header class="header">
+            <p class="tagline">YOUR PERSONAL STUDY SPACE</p>
+            <h1>Student Success Hub 🎓</h1>
+            <p class="subtitle">
+                Plan your studies. Stay organized. Achieve your goals.
+            </p>
+        </header>
+
+        <section class="card">
+            <h2>Add a Study Task</h2>
+
+            <form id="taskForm">
+                <input
+                    id="taskInput"
+                    type="text"
+                    placeholder="Enter your assignment or task"
+                    required
+                >
+
+                <input id="taskDate" type="date" required>
+
+                <button type="submit">+ Add Task</button>
+            </form>
+        </section>
+
+        <section class="stats">
+            <div class="stat-card">
+                <span id="totalCount">0</span>
+                <p>Total Tasks</p>
+            </div>
+
+            <div class="stat-card">
+                <span id="pendingCount">0</span>
+                <p>Pending</p>
+            </div>
+
+            <div class="stat-card">
+                <span id="completedCount">0</span>
+                <p>Completed</p>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>My Study Tasks 📚</h2>
+            <p id="taskCount">Your tasks will appear here.</p>
+            <ul id="taskList"></ul>
+            <p id="emptyMessage">No tasks yet. Add your first task above!</p>
+        </section>
+
+        <footer>
+            <p>Small steps every day lead to big achievements. 💚</p>
+        </footer>
+    </main>
+
+    <script>
+        const taskForm = document.getElementById("taskForm");
+        const taskInput = document.getElementById("taskInput");
+        const taskDate = document.getElementById("taskDate");
+        const taskList = document.getElementById("taskList");
+        const taskCount = document.getElementById("taskCount");
+        const emptyMessage = document.getElementById("emptyMessage");
+
+        let tasks = [];
+
+        try {
+            tasks = JSON.parse(
+                localStorage.getItem("studentTasks")
+            ) || [];
+
+            if (!Array.isArray(tasks)) {
+                tasks = [];
+            }
+        } catch (error) {
+            tasks = [];
+        }
+
+        function saveTasks() {
+            try {
+                localStorage.setItem(
+                    "studentTasks",
+                    JSON.stringify(tasks)
+                );
+            } catch (error) {
+                alert("Tasks could not be saved in this browser.");
+            }
+        }
+
+        function displayTasks() {
+            taskList.replaceChildren();
+
+            tasks.forEach((task, index) => {
+                const li = document.createElement("li");
+                li.className = "task-item";
+
+                const details = document.createElement("div");
+                details.className = "task-details";
+
+                const name = document.createElement("span");
+                name.textContent = task.name;
+                name.className = task.completed ? "completed" : "";
+
+                const date = document.createElement("small");
+                date.textContent = "Due: " + task.date;
+
+                const actions = document.createElement("div");
+                actions.className = "task-actions";
+
+                const completeButton = document.createElement("button");
+                completeButton.type = "button";
+                completeButton.textContent =
+                    task.completed ? "Undo" : "Complete";
+                completeButton.className = "complete-button";
+
+                completeButton.addEventListener("click", () => {
+                    tasks[index].completed = !tasks[index].completed;
+                    saveTasks();
+                    displayTasks();
+                });
+
+                const deleteButton = document.createElement("button");
+                deleteButton.type = "button";
+                deleteButton.textContent = "Delete";
+                deleteButton.className = "delete-button";
+
+                deleteButton.addEventListener("click", () => {
+                    tasks.splice(index, 1);
+                    saveTasks();
+                    displayTasks();
+                });
+
+                details.append(name, date);
+                actions.append(completeButton, deleteButton);
+                li.append(details, actions);
+                taskList.appendChild(li);
+            });
+
+            const completed = tasks.filter(task => task.completed).length;
+            const pending = tasks.length - completed;
+
+            document.getElementById("totalCount").textContent = tasks.length;
+            document.getElementById("pendingCount").textContent = pending;
+            document.getElementById("completedCount").textContent = completed;
+
+            taskCount.textContent =
+                `${tasks.length} task(s) • ${completed} completed`;
+
+            emptyMessage.style.display =
+                tasks.length === 0 ? "block" : "none";
+        }
+
+        taskForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const name = taskInput.value.trim();
+            const date = taskDate.value;
+
+            if (!name || !date) {
+                alert("Please enter a task and due date.");
+                return;
+            }
+
+            tasks.push({
+                name: name,
+                date: date,
+                completed: false
+            });
+
+            saveTasks();
+            displayTasks();
+            taskForm.reset();
+        });
+
+        displayTasks();
+    </script>
+
+</body>
+</html>
